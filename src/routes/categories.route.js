@@ -6,6 +6,7 @@ import { uploadCategory } from "../middlewares/upload.js"
 router.get("/", categoryController.index);
 router.post("/", uploadCategory.single('thumbnail'), categoryController.storeCategory);
 router.get("/:id", categoryController.getCategory);
+router.delete("/:id", categoryController.deleteCategory);
 router.put("/:id/edit",uploadCategory.single('thumbnail'), categoryController.editCategory);
 
 export default router;
