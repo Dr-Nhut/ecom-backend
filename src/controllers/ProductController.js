@@ -11,13 +11,13 @@ class ProductController {
     }
 
     storeProduct(req, res, next) {
-        const { title, price, desc, details } = req.body;
+        const { title, price, desc, category_id, details } = req.body;
         let thumbnails = [];
         req.files.forEach((file) => {
             thumbnails.push("public/img/products/" + file.filename);
         })
-        const sql = "INSERT INTO product (title, price, description, thumbnails) VALUES(?, ?, ?, ?);";
-        conn.query(sql, [title, price, desc, thumbnails.join(",")], function (err, result) {
+        const sql = "INSERT INTO product (category_id, title, price, description, thumbnails) VALUES(?, ?, ?, ?, ?);";
+        conn.query(sql, [+category_id, title, price, desc, thumbnails.join(",")], function (err, result) {
             if (err) {
                 console.error(err);
                 res.json({ status: 'ERROR', message: "Lưu sản phẩm thất bại" });
