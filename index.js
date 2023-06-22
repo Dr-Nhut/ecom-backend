@@ -4,6 +4,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import morgan from 'morgan';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 
 import route from "./src/routes/index.js";
 
@@ -24,8 +25,11 @@ conn.connect(function (err) {
 
 const app = express()
 
-
-app.use(cors());
+app.use(cors({
+    origin: true,
+    credentials: true,
+}));
+app.use(cookieParser());
 //Body Parser
 app.use(bodyParser.urlencoded({ extended: true }))
 
