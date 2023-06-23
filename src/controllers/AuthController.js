@@ -4,16 +4,22 @@ import { conn } from "../../index.js";
 
 class AuthController {
     index(req, res, next) {
-        jwt.verify(req.cookies.ecommerceToken, 'ecommerce', function(err, decoded) {
-            if(err) throw err;
-            if(decoded) {
-                const sql = `SELECT firstName, lastName FROM user WHERE idUser = ${decoded.userId};`;
+        if(!req.cookies.ecommerceToken) return res.send(false);
+        jwt.verify(req.cookies.ecommerceToken, 'ecommerce', function (err, decoded) {
+            if (err) throw err;
+            if (decoded) {
+                const sql = `SELECT firstName, lastName, phone, role_id, address_id, cart_id FROM user WHERE idUser = ${decoded.userId};`;
                 conn.promise().query(sql)
-                    .then(([rows, fields]) => {  
-                        console.log(rows)
-                        if(rows.length > 0) {
+                    .then(([rows, fields]) => {
+                        if (rows.length > 0) {
                             res.json({
-                                user: `${rows[0].firstName} ${rows[0].lastName}`,
+                                idUser: rows[0].idUser,
+                                firstName: rows[0].firstName,
+                                lastName: rows[0].lastName,
+                                phone: rows[0].phone,
+                                role: rows[0].role_id === 1,
+                                address: rows[0].address_id,
+                                cart: rows[0].cart_id
                             })
                         }
                         else {
@@ -86,10 +92,18 @@ class AuthController {
                                 "ecommerce",
                                 { expiresIn: "24h" }
                             );
-                            res.json({
+                            const user = {
+                                idUser: rows[0].idUser,
+                                firstName: rows[0].firstName,
                                 lastName: rows[0].lastName,
+                                phone: rows[0].phone,
+                                role: rows[0].role_id === 1,
+                                address: rows[0].address_id,
+                                cart: rows[0].cart_id
+                            }
+                            res.json({
+                                user,
                                 token,
-                                admin: rows[0].role_id === 1
                             });
                         })
                         .catch((err) => console.error(err));
