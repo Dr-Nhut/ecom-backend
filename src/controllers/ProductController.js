@@ -29,7 +29,7 @@ class ProductController {
     }
 
     storeProductStock(req, res, next) {
-        const values = req.details.map((item) => [item.product_id, item.color, item.size, item.quantity]);
+        const values = req.details.map((item) => [item.product_id, item.color.trim(), item.size.trim(), item.quantity]);
         const sql = `INSERT INTO stock (product_id, color, size, quantity) VALUES ? ;`;
 
         conn.query(sql, [values], function (err, result) {
@@ -40,6 +40,69 @@ class ProductController {
             };
             res.json({ status: 'SUCCESS', message: "Sản phẩm đã được lưu!" });
         });
+    }
+
+    getProductforCart(req, res, next) {
+        const idproduct = req.body.idproduct;
+        const sql = `SELECT title, price, thumbnails FROM product WHERE idproduct = ${idproduct};`;
+        conn.promise().query(sql)
+            .then(([rows, fields]) => {
+                req.title = rows[0].title;
+                req.price = rows[0].price;
+                req.thumbnail = rows[0].thumbnails.split(',')[0];
+                next();
+            })
+            .catch((err) => next(err));
+    }
+
+    getRating(req, res, next) {
+        const idproduct = req.params.id;
+
+        const sql = `SELECT rate FROM user_reviews WHERE ordered_product_id = ${idproduct};`;
+        conn.promise().query(sql)
+            .then(([rows, fields]) => {
+                const quantity = rows.length;
+                const rating = rows.reduce((pre, item) => pre + item, 0) || 0;
+                return res.json({
+                    rating,
+                    quantity
+                });
+            })
+            .catch((err) => console.error(err));
+    }
+
+    getColors(req, res, next) {
+        const idproduct = req.params.id;
+
+        const sql = `SELECT color FROM stock WHERE product_id = ${idproduct};`;
+        conn.promise().query(sql)
+            .then(([rows, fields]) => {
+                let colors = [];
+                rows.forEach((row) => {
+                    if (!colors.includes(row.color)) {
+                        colors.push(row.color);
+                    }
+                })
+                return res.json(colors);
+            })
+            .catch((err) => console.error(err));
+    }
+
+    getSizes(req, res, next) {
+        const idproduct = req.params.id;
+
+        const sql = `SELECT size FROM stock WHERE product_id = ${idproduct};`;
+        conn.promise().query(sql)
+            .then(([rows, fields]) => {
+                let sizes = [];
+                rows.forEach((row) => {
+                    if (!sizes.includes(row.size)) {
+                        sizes.push(row.size);
+                    }
+                })
+                return res.json(sizes);
+            })
+            .catch((err) => console.error(err));
     }
 }
 

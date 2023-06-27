@@ -6,5 +6,7 @@ import upload from "../middlewares/upload.js"
 
 router.get("/", productController.index);
 router.post("/", upload.array('thumbnail', 10), productController.storeProduct, productController.storeProductStock);
-
+router.get('/:id/rating', productController.getRating);
+router.get('/:id/colors', productController.getColors);
+router.get('/:id/sizes', productController.getSizes);
 export default router;
