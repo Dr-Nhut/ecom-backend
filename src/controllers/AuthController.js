@@ -5,20 +5,19 @@ import { conn } from "../../index.js";
 class AuthController {
     index(req, res, next) {
         if (!req.cookies.ecommerceToken) return res.send(false);
-        jwt.verify(req.cookies.ecommerceToken, 'ecommerce', function (err, decoded) {
+        jwt.verify(req.cookies.ecommerceToken, process.env.JWT_KEY, function (err, decoded) {
             if (err) throw err;
             if (decoded) {
-                const sql = `SELECT firstName, lastName, phone, role_id, address_id, idCart FROM user WHERE idUser = ${decoded.userId};`;
+                const sql = `SELECT firstName, lastName, phone, role_id, address, idCart FROM user WHERE idUser = ${decoded.userId};`;
                 conn.promise().query(sql)
                     .then(([rows, fields]) => {
                         if (rows.length > 0) {
                             res.json({
                                 idUser: rows[0].idUser,
-                                firstName: rows[0].firstName,
-                                lastName: rows[0].lastName,
+                                fullName: rows[0].firstName + ' ' + rows[0].lastName,
                                 phone: rows[0].phone,
                                 role: rows[0].role_id === 1,
-                                address: rows[0].address_id,
+                                address: rows[0].address,
                                 cart: rows[0].idCart
                             })
                         }
@@ -37,13 +36,13 @@ class AuthController {
             }
         })
     }
-
+lo
     getUserId(req, res, next) {
         if (!req.cookies.ecommerceToken) {
             return res.send(false);
         }
         else {
-            jwt.verify(req.cookies.ecommerceToken, 'ecommerce', function (err, decoded) {
+            jwt.verify(req.cookies.ecommerceToken, process.env.JWT_KEY, function (err, decoded) {
                 if (err) throw err;
                 if (decoded) {
                     req.idUser = decoded.userId;
@@ -109,16 +108,15 @@ class AuthController {
                                 {
                                     userId: rows[0].idUser
                                 },
-                                "ecommerce",
-                                { expiresIn: "24h" }
+                                process.env.JWT_KEY,
+                                { expiresIn: "365d" }
                             );
                             const user = {
                                 idUser: rows[0].idUser,
-                                firstName: rows[0].firstName,
-                                lastName: rows[0].lastName,
+                                fullName: rows[0].firstName + ' ' + rows[0].lastName,
                                 phone: rows[0].phone,
                                 role: rows[0].role_id === 1,
-                                address: rows[0].address_id,
+                                address: rows[0].address,
                                 cart: rows[0].idCart
                             }
                             res.json({
@@ -136,6 +134,18 @@ class AuthController {
                 }
             })
             .catch((e) => console.error(e));
+    }
+
+    storeAddress(req, res, next) {
+        const idUser = req.idUser;
+        const address = req.body.address;
+
+        const sql = `UPDATE user SET address = '${address}' WHERE idUser = ${idUser}`;
+        conn.promise().query(sql)
+            .then((response) => {
+                res.status(200).json({ status: 'SUCCESS' });
+            })
+            .catch((err) => console.error(err));
     }
 }
 

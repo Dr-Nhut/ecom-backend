@@ -3,11 +3,42 @@ import { conn } from "../../index.js";
 
 class ProductController {
     index(req, res, next) {
+        const page = req.query.page || 1;
+        const start = 1 + (+page - 1) * 10;
+        const sql = `SELECT * FROM product ORDER BY idproduct DESC LIMIT ${start}, 10`;
+        conn.promise().query(sql)
+            .then((response) => {
+                res.json(response[0]);
+            })
+            .catch((err) => console.error(err));
+    }
+
+    getAllProducts(req, res, next) {
+        const sql = `SELECT * FROM product ORDER BY idproduct DESC`;
+        conn.promise().query(sql)
+            .then((response) => {
+                res.json(response[0]);
+            })
+            .catch((err) => console.error(err));
+    }
+
+    getProduct(req, res, next) {
+        const idproduct = req.params.id;
+        const sql = `SELECT * FROM product WHERE idproduct = ${idproduct};`;
+        conn.promise().query(sql)
+            .then((response) => {
+                res.json(response[0][0]);
+            })
+            .catch((err) => console.error(err));
+    }
+
+    getQuantity(req, res, next) {
         const sql = "SELECT * FROM product";
-        conn.query(sql, function (err, data) {
-            if (err) throw err;
-            res.json(data);
-        });
+        conn.promise().query(sql)
+            .then((response) => {
+                res.json({ quantity: response[0].length });
+            })
+            .catch((err) => console.error(err));
     }
 
     storeProduct(req, res, next) {
@@ -24,13 +55,34 @@ class ProductController {
                 return;
             };
             req.details = JSON.parse(details).map(item => ({ product_id: result.insertId, ...item }));
+            req.product = {idproduct: result.insertId, category_id, title, price, discription: desc, thumbnails: thumbnails.join(',')};
             next();
+        });
+    }
+
+    updateProduct(req, res, next) {
+        const id = req.params.id;
+        const { title, price, desc, category_id } = req.body;
+        let thumbnails = [];
+        if (req.files) {
+            req.files.forEach((file) => {
+                thumbnails.push("public/img/products/" + file.filename);
+            })
+            thumbnails = `thumbnails = '${thumbnails.join(',')}',`;
+        }
+        else {
+            thumbnails = "";
+        }
+        const sql = `UPDATE  product SET category_id=${category_id}, title='${title}', ${thumbnails} price=${price}, description='${desc}'  WHERE idproduct=${id}`;
+        conn.query(sql, function (err, result) {
+            if (err) throw err;
+            res.json({ message: 'success' })
         });
     }
 
     storeProductStock(req, res, next) {
         const values = req.details.map((item) => [item.product_id, item.color.trim(), item.size.trim(), item.quantity]);
-        const sql = `INSERT INTO stock (product_id, color, size, quantity) VALUES ? ;`;
+        const sql = `INSERT INTO stock (idproduct, color, size, quantity) VALUES ? ;`;
 
         conn.query(sql, [values], function (err, result) {
             if (err) {
@@ -38,7 +90,7 @@ class ProductController {
                 res.json({ status: 'ERROR', message: "Lưu sản phẩm vào kho thất bại" });
                 return;
             };
-            res.json({ status: 'SUCCESS', message: "Sản phẩm đã được lưu!" });
+            res.json({ status: 'SUCCESS', message: "Sản phẩm đã được lưu!", product: req.product });
         });
     }
 
@@ -74,7 +126,7 @@ class ProductController {
     getColors(req, res, next) {
         const idproduct = req.params.id;
 
-        const sql = `SELECT color FROM stock WHERE product_id = ${idproduct};`;
+        const sql = `SELECT color FROM stock WHERE idproduct = ${idproduct};`;
         conn.promise().query(sql)
             .then(([rows, fields]) => {
                 let colors = [];
@@ -91,7 +143,7 @@ class ProductController {
     getSizes(req, res, next) {
         const idproduct = req.params.id;
 
-        const sql = `SELECT size FROM stock WHERE product_id = ${idproduct};`;
+        const sql = `SELECT size FROM stock WHERE idproduct = ${idproduct};`;
         conn.promise().query(sql)
             .then(([rows, fields]) => {
                 let sizes = [];
@@ -103,6 +155,25 @@ class ProductController {
                 return res.json(sizes);
             })
             .catch((err) => console.error(err));
+    }
+
+    deleteProduct(req, res, next) {
+        const id = req.params.id;
+        const sql = `Delete from product where idproduct = ${id};`;
+        conn.query(sql, function (err) {
+            if (err) {
+                console.error(err);
+                res.json({ status: 'ERROR', message: "Đã xảy ra lỗi" });
+            };
+            const sql = `Delete from stock where idproduct = ${id};`
+            conn.query(sql, function (err) {
+                if (err) {
+                    console.error(err);
+                    res.json({ status: 'ERROR', message: "Đã xảy ra lỗi" });
+                };
+                res.json({ status: 'SUCCESS', message: "Sản phẩm đã được xóa đã được xóa!" });
+            })
+        });
     }
 }
 

@@ -1,6 +1,5 @@
 import { conn } from "../../index.js";
 
-
 class CategoryController {
     index(req, res, next) {
         const sql = "SELECT * FROM category";

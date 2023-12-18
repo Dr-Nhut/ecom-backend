@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 
 import route from "./src/routes/index.js";
+import StripeController from './src/controllers/StripeController.js';
 
 const PORT = process.env.PORT || 3000;
 //connect database
@@ -30,6 +31,10 @@ app.use(cors({
     credentials: true,
 }));
 app.use(cookieParser());
+
+//Stripe 
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), StripeController.webhook);
+
 //Body Parser
 app.use(bodyParser.urlencoded({ extended: true }))
 

@@ -131,7 +131,7 @@ class CartController {
 
     getIdStock(req, res, next) {
         const { idproduct, color, size } = req.body;
-        const sql = `SELECT idStock FROM stock WHERE product_id = '${idproduct}' AND color = '${color}' AND size = '${size}';`;
+        const sql = `SELECT idStock FROM stock WHERE idproduct = '${idproduct}' AND color = '${color}' AND size = '${size}';`;
         conn.promise().query(sql)
             .then(([rows]) => {
                 req.idStock = rows[0].idStock;
