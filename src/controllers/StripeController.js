@@ -4,7 +4,7 @@ import Stripe from "stripe";
 
 const stripe = Stripe(process.env.STRIPE_KEY);
 let endpointSecret;
-endpointSecret = "whsec_b3b357db40f186682b7175a25daefa241389671e3e9747780fb4e77a84386dc8";
+endpointSecret = process.env.endpointSecret;
 
 class StripeController {
 
